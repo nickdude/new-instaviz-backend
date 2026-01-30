@@ -29,6 +29,7 @@ const create = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     success: true,
+    message: "Plan created successfully",
     data: plan
   });
 });
@@ -86,6 +87,7 @@ const update = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
+    message: "Plan updated successfully",
     data: plan
   });
 });
@@ -110,6 +112,7 @@ const toggleStatus = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
+    message: "Plan status updated successfully",
     data: plan
   });
 });

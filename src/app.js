@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 
@@ -7,6 +8,7 @@ const app = express();
 const authRoutes = require("./routes/auth");
 const planRoutes = require("./routes/plans");
 const subscriptionRoutes = require("./routes/subscriptions");
+const profileRoutes = require("./routes/profiles");
 
 // Import middleware
 const errorHandler = require("./middleware/errorHandler");
@@ -18,6 +20,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Routes
 app.get("/", (req, res) => {
@@ -27,6 +30,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/profiles", profileRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
