@@ -9,6 +9,8 @@ const authRoutes = require("./routes/auth");
 const planRoutes = require("./routes/plans");
 const subscriptionRoutes = require("./routes/subscriptions");
 const profileRoutes = require("./routes/profiles");
+const templateRoutes = require("./routes/templates");
+const themeRoutes = require("./routes/themes");
 
 // Import middleware
 const errorHandler = require("./middleware/errorHandler");
@@ -31,6 +33,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/profiles", profileRoutes);
+app.use("/api/templates", templateRoutes);
+app.use("/api/themes", themeRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
