@@ -12,12 +12,24 @@ const {
 // @route   POST /api/plans
 // @access  Private/Admin
 const create = asyncHandler(async (req, res) => {
-  const { title, description, durationDays, price, features } = req.body;
+  const { title, description, durationDays, price, cardTypes, features } = req.body;
 
   // Validation
-  if (!title || !description || !durationDays || !price || !features) {
+  if (!title || !description || !durationDays || !price || !cardTypes || !features) {
     res.status(400);
     throw new Error("Please provide all required fields");
+  }
+
+  if (!Array.isArray(cardTypes) || cardTypes.length === 0) {
+    res.status(400);
+    throw new Error("Card types must be a non-empty array. Choose from: physical, digital, NFC");
+  }
+
+  const validCardTypes = ["physical", "digital", "NFC"];
+  const invalidTypes = cardTypes.filter(type => !validCardTypes.includes(type));
+  if (invalidTypes.length > 0) {
+    res.status(400);
+    throw new Error(`Invalid card types: ${invalidTypes.join(", ")}. Valid options: physical, digital, NFC`);
   }
 
   if (!Array.isArray(features) || features.length === 0) {
@@ -25,7 +37,7 @@ const create = asyncHandler(async (req, res) => {
     throw new Error("Features must be a non-empty array");
   }
 
-  const plan = await createPlan({ title, description, durationDays, price, features });
+  const plan = await createPlan({ title, description, durationDays, price, cardTypes, features });
 
   res.status(201).json({
     success: true,
@@ -67,13 +79,28 @@ const getOne = asyncHandler(async (req, res) => {
 // @route   PUT /api/plans/:id
 // @access  Private/Admin
 const update = asyncHandler(async (req, res) => {
-  const { title, description, durationDays, price, features, isActive } = req.body;
+  const { title, description, durationDays, price, cardTypes, features, isActive } = req.body;
 
   const updateData = {};
   if (title !== undefined) updateData.title = title;
   if (description !== undefined) updateData.description = description;
   if (durationDays !== undefined) updateData.durationDays = durationDays;
   if (price !== undefined) updateData.price = price;
+  
+  if (cardTypes !== undefined) {
+    if (!Array.isArray(cardTypes) || cardTypes.length === 0) {
+      res.status(400);
+      throw new Error("Card types must be a non-empty array. Choose from: physical, digital, NFC");
+    }
+    const validCardTypes = ["physical", "digital", "NFC"];
+    const invalidTypes = cardTypes.filter(type => !validCardTypes.includes(type));
+    if (invalidTypes.length > 0) {
+      res.status(400);
+      throw new Error(`Invalid card types: ${invalidTypes.join(", ")}. Valid options: physical, digital, NFC`);
+    }
+    updateData.cardTypes = cardTypes;
+  }
+  
   if (features !== undefined) {
     if (!Array.isArray(features) || features.length === 0) {
       res.status(400);

@@ -26,6 +26,17 @@ const planSchema = new mongoose.Schema(
         required: [true, "Please provide price in dollars"]
       }
     },
+    cardTypes: {
+      type: [String],
+      enum: ["physical", "digital", "NFC"],
+      required: [true, "Please provide at least one card type"],
+      validate: {
+        validator: function(array) {
+          return array && array.length > 0;
+        },
+        message: "Card types list cannot be empty"
+      }
+    },
     features: {
       type: [String],
       required: [true, "Please provide at least one feature"],

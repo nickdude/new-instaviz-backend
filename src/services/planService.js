@@ -1,7 +1,7 @@
 const Plan = require("../models/Plan");
 
 // Create plan
-const createPlan = async ({ title, description, durationDays, price, features }) => {
+const createPlan = async ({ title, description, durationDays, price, cardTypes, features }) => {
   // Validate price structure
   if (!price?.rupees || !price?.dollar) {
     throw new Error("Please provide price in both rupees and dollars");
@@ -17,6 +17,7 @@ const createPlan = async ({ title, description, durationDays, price, features })
     description,
     durationDays,
     price,
+    cardTypes,
     features
   });
 
