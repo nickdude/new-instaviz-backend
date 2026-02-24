@@ -2,6 +2,11 @@ const Profile = require("../models/Profile");
 
 // Create a new profile
 const createProfile = async (userId, profileData) => {
+  const existingProfile = await Profile.findOne({ userId });
+  if (existingProfile) {
+    throw new Error("You can only create one profile. Please edit your existing profile instead.");
+  }
+
   const profile = new Profile({
     userId,
     ...profileData
