@@ -5,12 +5,17 @@ const { sendEmail } = require("../utils/email");
 const { signToken } = require("../utils/token");
 
 // Register user
-const registerUser = async ({ name, email, password, phone = "" }) => {
+const registerUser = async ({ name, email, password, phone = null }) => {
   // Check if user exists by email
   const existingUser = await User.findOne({ email });
+  const phoneExist = phone ? await User.findOne({ phone }) : null;
  
   if (existingUser) {
     throw new Error("User already exists with this email");
+  }
+
+  if (phoneExist) {
+    throw new Error("User already exists with this phone number");
   }
 
   // Hash password
@@ -29,7 +34,7 @@ const registerUser = async ({ name, email, password, phone = "" }) => {
   });
 
   // Send verification email
-  const verifyUrl = `${process.env.FRONTEND_URL}/auth/verify/${verifyToken}`;
+  const verifyUrl = `${process.env.FRONTEND_URL}/auth/verify-email/${verifyToken}`;
   try {
     await sendEmail({
       to: email,

@@ -52,7 +52,9 @@ const login = asyncHandler(async (req, res) => {
 // @route   GET /api/auth/verify/:token
 // @access  Public
 const verify = asyncHandler(async (req, res) => {
-  const { token } = req.params;
+  let { token } = req.params;
+  // Trim token to remove any trailing characters like '='
+  token = token.trim().replace(/=$/, '');
 
   const result = await verifyEmail({ token });
 
