@@ -5,8 +5,8 @@ const { sendEmail } = require("../utils/email");
 const { signToken } = require("../utils/token");
 
 // Register user
-const registerUser = async ({ name, email, password }) => {
-  // Check if user exists
+const registerUser = async ({ name, email, password, phone = "" }) => {
+  // Check if user exists by email
   const existingUser = await User.findOne({ email });
  
   if (existingUser) {
@@ -23,6 +23,7 @@ const registerUser = async ({ name, email, password }) => {
   const user = await User.create({
     name,
     email,
+    phone: phone ? phone.trim() : "",
     password: hashedPassword,
     verifyToken
   });
@@ -48,6 +49,7 @@ const registerUser = async ({ name, email, password }) => {
       id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       isVerified: user.isVerified,
       userType: user.userType
     },

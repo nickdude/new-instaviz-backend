@@ -12,7 +12,7 @@ const {
 // @route   POST /api/auth/register
 // @access  Public
 const register = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone } = req.body;
 
   // Validation
   if (!name || !email || !password) {
@@ -20,7 +20,7 @@ const register = asyncHandler(async (req, res) => {
     throw new Error("Please provide all required fields");
   }
 
-  const result = await registerUser({ name, email, password });
+  const result = await registerUser({ name, email, password, phone });
 
   res.status(201).json({
     success: true,
