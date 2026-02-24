@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const CREATE_CARD_API_URL = "https://dev.anurcloud.com/dvc/api/v1/create-card";
+const UPDATE_CARD_API_URL = "https://dev.anurcloud.com/dvc/api/v1/update-card";
 const API_KEY = "instaviz_uat_1234";
 
 const safeAppendFile = (form, fieldName, filePath) => {
@@ -24,7 +25,8 @@ const mapProfileToCreateCardPayload = ({
   templateId,
   themeId,
   profile,
-  user
+  user,
+  cardIdentifiers = {}
 }) => {
   const contactInfo = profile.contactInfo || {};
   const studentDetails = profile.studentDetails || {};
@@ -49,13 +51,17 @@ const mapProfileToCreateCardPayload = ({
   form.append("student_about_me", studentDetails.aboutMe || "");
   form.append("student_skills", JSON.stringify(studentDetails.skills || []));
 
+  if (cardIdentifiers.slug) {
+    form.append("slug", cardIdentifiers.slug);
+  }
+
   if (products.length > 0) {
     form.append("products", JSON.stringify(products.map((product) => ({
       name: product.name,
       description: product.description
     }))));
   } else {
-    form.append("products", "");
+    form.append("products", "[]");
   }
 
   safeAppendFile(form, "user_photo", contactInfo.photo);
@@ -70,6 +76,27 @@ const mapProfileToCreateCardPayload = ({
   });
 
   return form;
+};
+
+const getCardIdentifiers = (existingCard) => {
+  const response = existingCard?.response || {};
+  const data = response.data || {};
+
+  const slugFromLink = (link) => {
+    if (!link || typeof link !== "string") return null;
+    const parts = link.split("/dvc/");
+    return parts.length > 1 ? parts[1] : link.split("/").pop();
+  };
+
+  const slug =
+    response.slug ||
+    data.slug ||
+    response.card_slug ||
+    data.card_slug ||
+    slugFromLink(response.link || data.link || response.card_url || data.card_url || response.url || data.url) ||
+    null;
+
+  return { slug };
 };
 
 const createExternalCard = async ({ templateId, themeId, profile, user }) => {
@@ -197,6 +224,135 @@ const createExternalCard = async ({ templateId, themeId, profile, user }) => {
   return { data, payload };
 };
 
+const updateExternalCard = async ({ templateId, themeId, profile, user, existingCard }) => {
+  const contactInfo = profile.contactInfo || {};
+  const validationErrors = [];
+
+  if (!contactInfo.name || !contactInfo.name.trim()) {
+    validationErrors.push({
+      type: 'missing',
+      loc: ['body', 'user_name'],
+      msg: 'Field required',
+      input: null,
+    });
+  }
+
+  if (!contactInfo.designation || !contactInfo.designation.trim()) {
+    validationErrors.push({
+      type: 'missing',
+      loc: ['body', 'user_designation'],
+      msg: 'Field required',
+      input: null,
+    });
+  }
+
+  if (!contactInfo.email || !contactInfo.email.trim()) {
+    validationErrors.push({
+      type: 'missing',
+      loc: ['body', 'user_email'],
+      msg: 'Field required',
+      input: null,
+    });
+  }
+
+  if (!contactInfo.phone || !contactInfo.phone.trim()) {
+    validationErrors.push({
+      type: 'missing',
+      loc: ['body', 'user_contact_number'],
+      msg: 'Field required',
+      input: null,
+    });
+  }
+
+  if (!contactInfo.address || !contactInfo.address.trim()) {
+    validationErrors.push({
+      type: 'missing',
+      loc: ['body', 'user_address'],
+      msg: 'Field required',
+      input: null,
+    });
+  }
+
+  if (!contactInfo.photo) {
+    validationErrors.push({
+      type: 'missing',
+      loc: ['body', 'user_photo'],
+      msg: 'Field required',
+      input: null,
+    });
+  }
+
+  if (!profile.companyLogo) {
+    validationErrors.push({
+      type: 'missing',
+      loc: ['body', 'user_logo'],
+      msg: 'Field required',
+      input: null,
+    });
+  }
+
+  if (validationErrors.length > 0) {
+    const error = new Error('Validation error');
+    error.statusCode = 400;
+    error.code = 400;
+    error.details = validationErrors;
+    error.responseData = {
+      code: 400,
+      message: 'Validation error',
+      details: validationErrors,
+    };
+    throw error;
+  }
+
+  const cardIdentifiers = getCardIdentifiers(existingCard);
+  const form = mapProfileToCreateCardPayload({
+    templateId,
+    themeId,
+    profile,
+    user,
+    cardIdentifiers
+  });
+
+  const response = await fetch(UPDATE_CARD_API_URL, {
+    method: "POST",
+    headers: {
+      ...form.getHeaders(),
+      "X-API-Key": API_KEY
+    },
+    body: form
+  });
+
+  const data = await response.json();
+
+  if (data.code && data.code !== 200) {
+    const error = new Error(data.message || "Failed to update card");
+    error.statusCode = data.code;
+    error.code = data.code;
+    error.details = data.details;
+    error.responseData = data;
+    throw error;
+  }
+
+  if (!response.ok) {
+    const error = new Error(data.message || "Failed to update card");
+    error.statusCode = response.status;
+    error.code = data.code;
+    error.details = data.details;
+    error.responseData = data;
+    throw error;
+  }
+
+  const payload = {
+    templateId,
+    themeId,
+    profileId: profile._id,
+    userId: user._id
+  };
+
+  return { data, payload };
+};
+
 module.exports = {
-  createExternalCard
+  createExternalCard,
+  updateExternalCard
 };

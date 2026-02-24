@@ -31,6 +31,10 @@ const cardSchema = new mongoose.Schema(
     response: {
       type: Object,
       default: {}
+    },
+    slug: {
+      type: String,
+      default: null
     }
   },
   {

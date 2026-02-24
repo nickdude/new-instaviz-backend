@@ -4,6 +4,17 @@ const profileService = require("../services/profileService");
 const Card = require("../models/Card");
 const User = require("../models/User");
 
+const extractSlug = (response) => {
+  if (!response) return null;
+  const data = response.data || {};
+  const link = response.link || data.link || response.card_url || data.card_url || response.url || data.url || null;
+
+  if (response.slug || data.slug) return response.slug || data.slug;
+  if (!link || typeof link !== "string") return null;
+  const parts = link.split("/dvc/");
+  return parts.length > 1 ? parts[1] : link.split("/").pop();
+};
+
 // @desc    Create card for a profile using template and theme
 // @route   POST /api/cards
 // @access  Private (User)
@@ -36,7 +47,8 @@ const createCard = asyncHandler(async (req, res) => {
       themeId,
       status: data?.status || "created",
       payload,
-      response: data
+      response: data,
+      slug: extractSlug(data)
     });
 
     res.status(201).json({
@@ -120,11 +132,12 @@ const updateCard = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
 
   try {
-    const { data, payload } = await cardService.createExternalCard({
+    const { data, payload } = await cardService.updateExternalCard({
       templateId: finalTemplateId,
       themeId: finalThemeId,
       profile,
-      user
+      user,
+      existingCard: card
     });
 
     card.profileId = finalProfileId;
@@ -133,6 +146,7 @@ const updateCard = asyncHandler(async (req, res) => {
     card.status = data?.status || "updated";
     card.payload = payload;
     card.response = data;
+    card.slug = extractSlug(data) || card.slug;
 
     await card.save();
 
