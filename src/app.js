@@ -12,6 +12,7 @@ const profileRoutes = require("./routes/profiles");
 const templateRoutes = require("./routes/templates");
 const themeRoutes = require("./routes/themes");
 const cardRoutes = require("./routes/cards");
+const userRoutes = require("./routes/users");
 
 // Import middleware
 const errorHandler = require("./middleware/errorHandler");
@@ -31,6 +32,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/profiles", profileRoutes);
