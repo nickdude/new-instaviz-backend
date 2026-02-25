@@ -58,7 +58,7 @@ const mapProfileToCreateCardPayload = ({
   if (products.length > 0) {
     form.append("products", JSON.stringify(products.map((product) => ({
       name: product.name,
-      description: product.description
+      short_description: product.description
     }))));
   } else {
     form.append("products", "[]");
