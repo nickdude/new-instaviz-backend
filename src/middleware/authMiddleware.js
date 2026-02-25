@@ -16,7 +16,10 @@ const authMiddleware = (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
-    req.user = decoded;
+    req.user = {
+      ...decoded,
+      _id: decoded.id || decoded._id
+    };
     next();
   } catch (error) {
     res.status(401);
