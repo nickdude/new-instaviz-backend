@@ -111,6 +111,45 @@ const updateProfile = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const updateData = buildProfileData(req);
 
+  // Preserve existing media references when updating without re-uploading files
+  const existingProfile = await profileService.getProfileById(id, userId);
+
+  if (updateData.contactInfo) {
+    updateData.contactInfo = {
+      ...updateData.contactInfo,
+      photo: updateData.contactInfo.photo ?? existingProfile.contactInfo?.photo ?? null
+    };
+  }
+
+  if (updateData.companyLogo === undefined || updateData.companyLogo === null) {
+    updateData.companyLogo = existingProfile.companyLogo ?? null;
+  }
+
+  if (updateData.studentDetails) {
+    updateData.studentDetails = {
+      ...updateData.studentDetails,
+      resumeFile:
+        updateData.studentDetails.resumeFile ??
+        existingProfile.studentDetails?.resumeFile ??
+        null
+    };
+  }
+
+  if (Array.isArray(updateData.products)) {
+    const existingProducts = Array.isArray(existingProfile.products)
+      ? existingProfile.products
+      : [];
+
+    updateData.products = updateData.products.map((product, index) => {
+      const existingProduct = existingProducts[index] || {};
+      return {
+        ...product,
+        image: product.image ?? existingProduct.image ?? null,
+        pdf: product.pdf ?? existingProduct.pdf ?? null
+      };
+    });
+  }
+
   const profile = await profileService.updateProfile(id, userId, updateData);
 
   res.status(200).json({
