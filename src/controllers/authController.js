@@ -5,8 +5,10 @@ const {
   verifyEmail,
   forgotPassword,
   resetPassword,
+  googleAuth,
   createAdmin
 } = require("../services/authService");
+const fetch = require("node-fetch");
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -123,11 +125,64 @@ const createAdminUser = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Google OAuth authentication
+// @route   POST /api/auth/google
+// @access  Public
+const google = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    res.status(400);
+    throw new Error("Google token is required");
+  }
+
+  try {
+    // Verify Google token with Google's API
+    const googleResponse = await fetch(
+      `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`
+    );
+    const googleData = await googleResponse.json();
+
+    if (!googleResponse.ok) {
+      res.status(401);
+      throw new Error("Invalid Google token");
+    }
+
+    // Get user info from Google
+    const userInfoResponse = await fetch(
+      `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${token}`
+    );
+    const userInfo = await userInfoResponse.json();
+
+    if (!userInfoResponse.ok) {
+      res.status(401);
+      throw new Error("Failed to fetch user info from Google");
+    }
+
+    // Authenticate or create user
+    const result = await googleAuth({
+      googleId: userInfo.id,
+      email: userInfo.email,
+      name: userInfo.name,
+      picture: userInfo.picture
+    });
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    res.status(401);
+    throw new Error(error.message || "Google authentication failed");
+  }
+});
+
 module.exports = {
   register,
   login,
   verify,
   forgot,
   reset,
+  google,
   createAdminUser
 };

@@ -6,12 +6,14 @@ const {
   verify,
   forgot,
   reset,
+  google,
   createAdminUser
 } = require("../controllers/authController");
 const { authMiddleware, adminOnly, firstAdminOrAuth } = require("../middleware/authMiddleware");
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/google", google);
 router.get("/verify/:token", verify);
 router.post("/forgot", forgot);
 router.post("/reset/:token", reset);

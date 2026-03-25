@@ -184,6 +184,49 @@ const resetPassword = async ({ token, password }) => {
   };
 };
 
+// Google OAuth authentication
+const googleAuth = async ({ googleId, email, name, picture = null }) => {
+  // Try to find user by googleId first
+  let user = await User.findOne({ googleId });
+
+  if (!user) {
+    // Check if user exists by email
+    const emailUser = await User.findOne({ email });
+    
+    if (emailUser) {
+      // Link Google ID to existing user
+      emailUser.googleId = googleId;
+      if (picture) emailUser.profilePicture = picture;
+      await emailUser.save();
+      user = emailUser;
+    } else {
+      // Create new user with Google OAuth
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        isVerified: true, // Google-authenticated users are pre-verified
+        userType: "user",
+        profilePicture: picture
+      });
+    }
+  }
+
+  // Generate JWT token
+  const token = signToken({ id: user._id, userType: user.userType });
+
+  return {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      isVerified: user.isVerified,
+      userType: user.userType
+    },
+    token
+  };
+};
+
 // Create admin user (restricted, should only be called with proper authorization)
 const createAdmin = async ({ name, email, password }) => {
   // Check if user exists
@@ -225,5 +268,6 @@ module.exports = {
   verifyEmail,
   forgotPassword,
   resetPassword,
+  googleAuth,
   createAdmin
 };
