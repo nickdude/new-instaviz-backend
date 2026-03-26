@@ -1,6 +1,32 @@
 const asyncHandler = require("../middleware/asyncHandler");
 const profileService = require("../services/profileService");
 
+const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
+const validateProfileImageFiles = (files = {}) => {
+  const photo = files.photo?.[0];
+  const companyLogo = files.companyLogo?.[0];
+  const productImages = files.productImages || [];
+
+  if (photo && !ALLOWED_PROFILE_IMAGE_TYPES.includes(photo.mimetype)) {
+    return "Your photo must be JPG, JPEG, or PNG format";
+  }
+
+  if (companyLogo && !ALLOWED_PROFILE_IMAGE_TYPES.includes(companyLogo.mimetype)) {
+    return "Organization logo must be JPG, JPEG, or PNG format";
+  }
+
+  const invalidProductImage = productImages.find(
+    (file) => !ALLOWED_PROFILE_IMAGE_TYPES.includes(file.mimetype)
+  );
+
+  if (invalidProductImage) {
+    return "Product image must be JPG, JPEG, or PNG format";
+  }
+
+  return null;
+};
+
 const parseMaybeJson = (value) => {
   if (!value || typeof value !== "string") return value;
   try {
@@ -63,6 +89,11 @@ const buildProfileData = (req) => {
 // @access  Private (User)
 const createProfile = asyncHandler(async (req, res) => {
   const userId = req.user.id;
+  const imageValidationError = validateProfileImageFiles(req.files);
+  if (imageValidationError) {
+    res.status(400);
+    throw new Error(imageValidationError);
+  }
   const profileData = buildProfileData(req);
 
   const profile = await profileService.createProfile(userId, profileData);
@@ -109,6 +140,11 @@ const getProfileById = asyncHandler(async (req, res) => {
 const updateProfile = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { id } = req.params;
+  const imageValidationError = validateProfileImageFiles(req.files);
+  if (imageValidationError) {
+    res.status(400);
+    throw new Error(imageValidationError);
+  }
   const updateData = buildProfileData(req);
 
   // Preserve existing media references when updating without re-uploading files
