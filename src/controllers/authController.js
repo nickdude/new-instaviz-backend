@@ -137,34 +137,39 @@ const google = asyncHandler(async (req, res) => {
   }
 
   try {
-    // Verify Google token with Google's API
+    // Verify Google ID token (credential) from Google Identity Services
     const googleResponse = await fetch(
-      `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${token}`
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(token)}`
     );
     const googleData = await googleResponse.json();
 
-    if (!googleResponse.ok) {
+    if (!googleResponse.ok || !googleData?.sub || !googleData?.email) {
       res.status(401);
       throw new Error("Invalid Google token");
     }
 
-    // Get user info from Google
-    const userInfoResponse = await fetch(
-      `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${token}`
-    );
-    const userInfo = await userInfoResponse.json();
+    // Validate token audience (client id) when configured
+    const allowedClientIds = [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+    ].filter(Boolean);
 
-    if (!userInfoResponse.ok) {
+    if (allowedClientIds.length > 0 && !allowedClientIds.includes(googleData.aud)) {
       res.status(401);
-      throw new Error("Failed to fetch user info from Google");
+      throw new Error("Google token client mismatch");
+    }
+
+    if (googleData.email_verified === "false" || googleData.email_verified === false) {
+      res.status(401);
+      throw new Error("Google email is not verified");
     }
 
     // Authenticate or create user
     const result = await googleAuth({
-      googleId: userInfo.id,
-      email: userInfo.email,
-      name: userInfo.name,
-      picture: userInfo.picture
+      googleId: googleData.sub,
+      email: googleData.email,
+      name: googleData.name || googleData.email.split("@")[0],
+      picture: googleData.picture || null
     });
 
     res.json({

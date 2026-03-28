@@ -2,6 +2,7 @@ const asyncHandler = require("../middleware/asyncHandler");
 const profileService = require("../services/profileService");
 
 const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024;
 
 const validateProfileImageFiles = (files = {}) => {
   const photo = files.photo?.[0];
@@ -12,8 +13,16 @@ const validateProfileImageFiles = (files = {}) => {
     return "Your photo must be JPG, JPEG, or PNG format";
   }
 
+  if (photo && photo.size > MAX_IMAGE_SIZE_BYTES) {
+    return "Your photo size must be 3MB or less";
+  }
+
   if (companyLogo && !ALLOWED_PROFILE_IMAGE_TYPES.includes(companyLogo.mimetype)) {
     return "Organization logo must be JPG, JPEG, or PNG format";
+  }
+
+  if (companyLogo && companyLogo.size > MAX_IMAGE_SIZE_BYTES) {
+    return "Organization logo size must be 3MB or less";
   }
 
   const invalidProductImage = productImages.find(
@@ -22,6 +31,14 @@ const validateProfileImageFiles = (files = {}) => {
 
   if (invalidProductImage) {
     return "Product image must be JPG, JPEG, or PNG format";
+  }
+
+  const oversizedProductImage = productImages.find(
+    (file) => file.size > MAX_IMAGE_SIZE_BYTES
+  );
+
+  if (oversizedProductImage) {
+    return "Product image size must be 3MB or less";
   }
 
   return null;
