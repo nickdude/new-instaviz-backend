@@ -1,13 +1,33 @@
 const asyncHandler = require("../middleware/asyncHandler");
 const profileService = require("../services/profileService");
+const path = require("path");
 
 const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+const BLOCKED_IMAGE_TYPES = ["image/jfif", "image/webp", "image/gif", "image/bmp"];
+const BLOCKED_EXTENSIONS = ['.jfif', '.webp', '.gif', '.bmp'];
 const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024;
+
+const getFileExtension = (filename) => path.extname(filename).toLowerCase();
+
+const isBlockedExtension = (filename) => {
+  const ext = getFileExtension(filename);
+  return BLOCKED_EXTENSIONS.includes(ext);
+};
 
 const validateProfileImageFiles = (files = {}) => {
   const photo = files.photo?.[0];
   const companyLogo = files.companyLogo?.[0];
   const productImages = files.productImages || [];
+
+  // Check photo for blocked extension
+  if (photo && isBlockedExtension(photo.originalname)) {
+    return `${getFileExtension(photo.originalname).toUpperCase()} format is not allowed for photo. Only JPG, JPEG, or PNG are accepted.`;
+  }
+
+  // Check for blocked MIME types
+  if (photo && BLOCKED_IMAGE_TYPES.includes(photo.mimetype)) {
+    return `${photo.mimetype === 'image/jfif' ? 'JFIF' : 'This'} format is not allowed for photo. Only JPG, JPEG, or PNG are accepted.`;
+  }
 
   if (photo && !ALLOWED_PROFILE_IMAGE_TYPES.includes(photo.mimetype)) {
     return "Your photo must be JPG, JPEG, or PNG format";
@@ -17,12 +37,40 @@ const validateProfileImageFiles = (files = {}) => {
     return "Your photo size must be 3MB or less";
   }
 
+  // Check logo for blocked extension
+  if (companyLogo && isBlockedExtension(companyLogo.originalname)) {
+    return `${getFileExtension(companyLogo.originalname).toUpperCase()} format is not allowed for logo. Only JPG, JPEG, or PNG are accepted.`;
+  }
+
+  // Check for blocked MIME types
+  if (companyLogo && BLOCKED_IMAGE_TYPES.includes(companyLogo.mimetype)) {
+    return `${companyLogo.mimetype === 'image/jfif' ? 'JFIF' : 'This'} format is not allowed for logo. Only JPG, JPEG, or PNG are accepted.`;
+  }
+
   if (companyLogo && !ALLOWED_PROFILE_IMAGE_TYPES.includes(companyLogo.mimetype)) {
     return "Organization logo must be JPG, JPEG, or PNG format";
   }
 
   if (companyLogo && companyLogo.size > MAX_IMAGE_SIZE_BYTES) {
     return "Organization logo size must be 3MB or less";
+  }
+
+  // Check for blocked extensions in product images
+  const blockedExtProduct = productImages.find(
+    (file) => isBlockedExtension(file.originalname)
+  );
+
+  if (blockedExtProduct) {
+    return `${getFileExtension(blockedExtProduct.originalname).toUpperCase()} format is not allowed for product images. Only JPG, JPEG, or PNG are accepted.`;
+  }
+
+  // Check for blocked MIME types in product images
+  const blockedProductImage = productImages.find(
+    (file) => BLOCKED_IMAGE_TYPES.includes(file.mimetype)
+  );
+
+  if (blockedProductImage) {
+    return `${blockedProductImage.mimetype === 'image/jfif' ? 'JFIF' : 'This'} format is not allowed for product images. Only JPG, JPEG, or PNG are accepted.`;
   }
 
   const invalidProductImage = productImages.find(
