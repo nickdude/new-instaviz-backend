@@ -1,3 +1,4 @@
+
 const asyncHandler = require("../middleware/asyncHandler");
 const {
   createPlan,
@@ -7,6 +8,7 @@ const {
   deletePlan,
   togglePlanStatus
 } = require("../services/planService");
+const { getPlansWithStats } = require("../services/planStatsService");
 
 // @desc    Create new plan
 // @route   POST /api/plans
@@ -51,11 +53,9 @@ const create = asyncHandler(async (req, res) => {
 // @access  Public
 const getAll = asyncHandler(async (req, res) => {
   const { isActive } = req.query;
-  
-  const plans = await getAllPlans({ 
-    isActive: isActive === "true" ? true : isActive === "false" ? false : undefined 
+  const plans = await getPlansWithStats({
+    isActive: isActive === "true" ? true : isActive === "false" ? false : undefined
   });
-
   res.json({
     success: true,
     count: plans.length,
