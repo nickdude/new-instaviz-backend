@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
-const TEMPLATES_API_URL = 'https://dev.anurcloud.com/dvc/api/v1/templates';
-const API_KEY = 'instaviz_uat_1234';
+const TEMPLATES_API_URL = `${process.env.API_CARD}/templates`;
+const API_KEY = `${process.env.API_KEY}`;
 
 // Get all templates from external API
 const getTemplates = async () => {

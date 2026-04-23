@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
-const THEMES_API_URL = 'https://dev.anurcloud.com/dvc/api/v1/themes';
-const API_KEY = 'instaviz_uat_1234';
+const THEMES_API_URL = `${process.env.API_CARD}/themes`;
+const API_KEY = `${process.env.API_KEY}`;
 
 // Get all themes for a specific template
 const getThemesByTemplateId = async (templateId) => {

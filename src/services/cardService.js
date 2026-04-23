@@ -3,9 +3,9 @@ const FormData = require("form-data");
 const fs = require("fs");
 const path = require("path");
 
-const CREATE_CARD_API_URL = "https://dev.anurcloud.com/dvc/api/v1/create-card";
-const UPDATE_CARD_API_URL = "https://dev.anurcloud.com/dvc/api/v1/update-card";
-const API_KEY = "instaviz_uat_1234";
+const CREATE_CARD_API_URL = `${process.env.API_CARD}/create-card`;
+const UPDATE_CARD_API_URL = `${process.env.API_CARD}/update-card`;
+const API_KEY = `${process.env.API_KEY}`;
 
 const safeAppendFile = (form, fieldName, filePath) => {
   if (!filePath) return;
